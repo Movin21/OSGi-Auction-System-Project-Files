@@ -1,0 +1,5 @@
+package auctioncreator;
+
+public interface AuctionService {
+
+}

@@ -1,0 +1,42 @@
+package auctionbidder;
+
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+
+public class Activator implements BundleActivator {
+    private ServiceReference<AuctionService> serviceReference;
+
+    @Override
+    public void start(BundleContext context) throws Exception {
+        System.out.println("Auction Bidder Starting...");
+
+        // Get reference to AuctionService
+        serviceReference = context.getServiceReference(AuctionService.class);
+        if (serviceReference == null) {
+            System.out.println("No AuctionService found!");
+            return;
+        }
+
+        AuctionService auction = context.getService(serviceReference);
+        System.out.println("Current Auction: " + auction.getAuctionDetails());
+
+        // Terminal input for bidding
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter your bid: ");
+        double bid = scanner.nextDouble();
+
+        // Submit bid and get feedback
+        boolean success = auction.updateHighestBid(bid);
+        if (success) {
+            System.out.println("Bid accepted! New details: " + auction.getAuctionDetails());
+        }
+    }
+
+    @Override
+    public void stop(BundleContext context) throws Exception {
+        System.out.println("Auction Bidder Stopping...");
+        if (serviceReference != null) {
+            context.ungetService(serviceReference);
+        }
+    }
+}

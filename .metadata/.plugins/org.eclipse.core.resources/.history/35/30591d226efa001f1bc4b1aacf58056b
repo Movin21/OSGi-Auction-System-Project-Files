@@ -1,0 +1,67 @@
+package auctionbidder;
+
+import java.util.Scanner;
+
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+
+import auctioncreator.AuctionService;
+
+public class Activator implements BundleActivator {
+    private ServiceReference<AuctionService> serviceReference;
+
+    @Override
+    public void start(BundleContext context) throws Exception {
+        System.out.println("Auction Bidder Starting...");
+
+        // Get reference to AuctionService
+        serviceReference = context.getServiceReference(AuctionService.class);
+        if (serviceReference == null) {
+            System.out.println("No AuctionService found!");
+            return;
+        }
+
+        AuctionService auction = context.getService(serviceReference);
+        System.out.println("Auction Bidder Starting...");
+        System.out.println("Current Auction: " + auction.getAuctionDetails());
+
+        // Prompt for bidder's name once
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter your name: ");
+        String bidderName = scanner.nextLine();
+
+        // First bid attempt
+        System.out.println("Enter your bid: ");
+        double bid = scanner.nextDouble();
+
+        boolean success = auction.updateHighestBid(bid);
+        if (success) {
+        	scanner.close();
+        	System.out.println("Bid by " + bidderName + " accepted! New details: " + auction.getAuctionDetails());
+        } else {
+            // Second chance if first bid is rejected
+            System.out.println("Enter a higher bid: ");
+            double secondBid = scanner.nextDouble();
+            scanner.close();
+            success = auction.updateHighestBid(secondBid);
+            if (success) {
+            	
+            	System.out.println("Bid by " + bidderName + " accepted! New details: " + auction.getAuctionDetails());
+            } else {
+                System.out.println("Sorry, no more chances. Exiting bidding process.");
+                
+                return;  // Exit the start method, no further bidding
+                
+        }
+        
+    }
+
+    @Override
+    public void stop(BundleContext context) throws Exception {
+        System.out.println("Auction Bidder Stopping...");
+        if (serviceReference != null) {
+            context.ungetService(serviceReference);
+        }
+    }
+}

@@ -1,0 +1,55 @@
+package auctionmonitor;
+
+import auctioncreator.AuctionService;
+import auctiontimer.TimerService;
+
+import java.util.Scanner;
+
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+
+public class Activator implements BundleActivator {
+    private ServiceReference<AuctionService> auctionRef;
+    private ServiceReference<TimerService> timerRef;
+
+    @Override
+    public void start(BundleContext context) throws Exception {
+        System.out.println("Auction Monitor Starting...");
+
+        // Get AuctionService reference
+        auctionRef = context.getServiceReference(AuctionService.class);
+        timerRef = context.getServiceReference(TimerService.class);
+        if (auctionRef == null || timerRef == null) {
+            System.out.println("Required services not found!");
+            return;
+        }
+
+        AuctionService auction = context.getService(auctionRef);
+        TimerService timer = context.getService(timerRef);
+
+        // Prompt for auction ID (simplified to assume one auction)
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter auction ID to monitor (press Enter for default): ");
+        scanner.nextLine();  // Dummy input, assuming one auction for simplicity
+        snanner.close();
+
+        // Monitor loop
+        while (!timer.isAuctionClosed()) {
+            System.out.println("Status: " + auction.getAuctionDetails() + ", Time Remaining: " + timer.getTimeRemaining() + " sec");
+            Thread.sleep(5000);  // Update every 5 seconds
+        }
+        System.out.println("Final Status: " + auction.getAuctionDetails() + ", Auction Closed.");
+    }
+
+    @Override
+    public void stop(BundleContext context) throws Exception {
+        System.out.println("Auction Monitor Stopping...");
+        if (auctionRef != null) {
+            context.ungetService(auctionRef);
+        }
+        if (timerRef != null) {
+            context.ungetService(timerRef);
+        }
+    }
+}

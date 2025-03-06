@@ -1,0 +1,59 @@
+package paymentprocessor;
+
+import auctioncreator.AuctionService;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
+
+public class Activator implements BundleActivator {
+    private ServiceRegistration<PaymentService> registration;
+
+    @Override
+    public void start(BundleContext context) throws Exception {
+        System.out.println("Payment Processor Starting...");
+
+        // Get AuctionService and TimerService references
+        ServiceReference<AuctionService> auctionRef = context.getServiceReference(AuctionService.class);
+        ServiceReference<TimerService> timerRef = context.getServiceReference(TimerService.class);
+        if (auctionRef == null || timerRef == null) {
+            System.out.println("Required services not found!");
+            return;
+        }
+
+        AuctionService auction = context.getService(auctionRef);
+        TimerService timer = context.getService(timerRef);
+
+        // Wait for auction to close
+        while (!timer.isAuctionClosed()) {
+            System.out.println("Waiting for auction to close...");
+            Thread.sleep(2000);  // Check every 2 seconds
+        }
+
+        // Parse highest bid from auction details (simplified parsing)
+        String details = auction.getAuctionDetails();
+        double highestBid = Double.parseDouble(details.split("Highest Bid: ")[1].split(",")[0]);
+
+        // Terminal input for payment
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Auction closed. Highest bid: " + highestBid);
+        System.out.println("Enter payment amount: ");
+        double amount = scanner.nextDouble();
+        scanner.nextLine();  // Consume newline
+        System.out.println("Enter payment method (credit/paypal): ");
+        String method = scanner.nextLine();
+
+        // Create and register PaymentService
+        PaymentService payment = new PaymentImpl(highestBid);
+        payment.processPayment(amount, method);
+        registration = context.registerService(PaymentService.class, payment, null);
+    }
+
+    @Override
+    public void stop(BundleContext context) throws Exception {
+        System.out.println("Payment Processor Stopping...");
+        if (registration != null) {
+            registration.unregister();
+        }
+    }
+}

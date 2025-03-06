@@ -1,0 +1,45 @@
+package auctioncreator;
+
+import java.util.Scanner;
+
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
+
+public class Activator implements BundleActivator {
+	private ServiceRegistration<AuctionService> registration;
+
+    @Override
+    public void start(BundleContext context) throws Exception {
+        System.out.println("Auction Creator Starting...");
+
+        // Terminal input for auction details
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter item name: ");
+        String itemName = scanner.nextLine();
+        System.out.println("Enter starting price: ");
+        double startingPrice = scanner.nextDouble();
+        System.out.println("Enter duration (seconds): ");
+        int duration = scanner.nextInt();
+
+        // Input validation
+        if (startingPrice <= 0 || duration <= 0) {
+            System.out.println("Invalid input! Price and duration must be positive.");
+            return;
+        }
+
+        // Create and register the auction service
+        AuctionService auction = new AuctionImpl(itemName, startingPrice, duration);
+        registration = context.registerService(AuctionService.class, auction, null);
+        System.out.println("Auction created: " + auction.getAuctionDetails());
+    }
+
+    @Override
+    public void stop(BundleContext context) throws Exception {
+        System.out.println("Auction Creator Stopping...");
+        if (registration != null) {
+            registration.unregister();
+        }
+    }
+
+}
